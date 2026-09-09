@@ -91,8 +91,14 @@ PROJETOS = {
         # de agendar o Job para esta campanha. Os campos abaixo são só os
         # nomes das chaves — nenhum notebook vai rodar corretamente pra CDM
         # enquanto isso não for preenchido.
-        "nome_exibicao": "AA - Investigação Confirmatória (CDM)", 
+        "nome_exibicao": "AA - Investigação Confirmatória (CDM)",
         "campanha_api": "Projeto_1233_IC_CDM",
+        # TEMPORARIO: amostras da propriedade CDM que o laboratorio classificou sob
+        # a campanha "Projeto_1233_BR_SE_AA" por engano. Ja foi pedida a
+        # reclassificacao ao lab -- remover esta chave quando as amostras voltarem
+        # como Projeto_1233_IC_CDM. Confirmar o valor EXATO da coluna `campanha` na
+        # API antes de rodar (ver df_final.select("campanha").distinct() no nb1).
+        "campanhas_api_extra": ["Projeto_1233_BR_SE_AA"],
         "source_project_sql": 'AA Codemin - Investigacao Confirmatoria',
         "sharepoint_depara_folder": ("General/06 - Análise de dados/Suporte Digital/Barro Alto/Investigação Confirmatória/Depara"),
         "depara_filename": "Depara_1233_IC_BA.xlsx",  
