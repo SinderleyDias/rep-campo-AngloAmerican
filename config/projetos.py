@@ -98,7 +98,7 @@ PROJETOS = {
         # reclassificacao ao lab -- remover esta chave quando as amostras voltarem
         # como Projeto_1233_IC_CDM. Confirmar o valor EXATO da coluna `campanha` na
         # API antes de rodar (ver df_final.select("campanha").distinct() no nb1).
-        "campanhas_api_extra": ["Projeto_1233_BR_SE_AA"],
+        "campanhas_api_extra": ["Projeto 1233_BR_SE_AA"],
         "source_project_sql": 'AA Codemin - Investigacao Confirmatoria',
         "sharepoint_depara_folder": ("General/06 - Análise de dados/Suporte Digital/Barro Alto/Investigação Confirmatória/Depara"),
         "depara_filename": "Depara_1233_IC_BA.xlsx",  
