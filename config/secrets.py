@@ -22,6 +22,38 @@ def _load_dotenv():
         pass
 
 
+def _get_dbutils():
+    """
+    Retorna `dbutils` quando rodando no Databricks, senão None.
+
+    `import dbutils` NÃO funciona de dentro de um módulo `.py` no Databricks
+    (dbutils só existe no namespace do notebook). Resolve pelas vias suportadas:
+    helper do runtime (DBR 13+), SparkSession ativa (clássico, funciona em Jobs)
+    e por fim o global do notebook via IPython.
+    """
+    try:
+        from databricks.sdk.runtime import dbutils as _db
+        return _db
+    except Exception:
+        pass
+    try:
+        from pyspark.sql import SparkSession
+        from pyspark.dbutils import DBUtils
+        _spark = SparkSession.getActiveSession()
+        if _spark is not None:
+            return DBUtils(_spark)
+    except Exception:
+        pass
+    try:
+        import IPython
+        _ip = IPython.get_ipython()
+        if _ip is not None and "dbutils" in _ip.user_ns:
+            return _ip.user_ns["dbutils"]
+    except Exception:
+        pass
+    return None
+
+
 def _get(env_key: str, secrets_scope: str, secrets_key: str) -> str:
     _load_dotenv()
 
@@ -29,13 +61,14 @@ def _get(env_key: str, secrets_scope: str, secrets_key: str) -> str:
     if value:
         return value
 
-    try:
-        import dbutils
-        value = dbutils.secrets.get(scope=secrets_scope, key=secrets_key)
-        if value:
-            return value
-    except Exception:
-        pass
+    _dbutils = _get_dbutils()
+    if _dbutils is not None:
+        try:
+            value = _dbutils.secrets.get(scope=secrets_scope, key=secrets_key)
+            if value:
+                return value
+        except Exception:
+            pass
 
     raise ValueError(
         f"Segredo não encontrado: configure a variável de ambiente '{env_key}' "

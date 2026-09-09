@@ -42,7 +42,7 @@ Configuração:
 from .auth import get_token
 from .download import download_file, download_file_by_name
 from .upload import upload_file
-from .utils import parse_sharepoint_url
+from .utils import parse_sharepoint_url, get_dbutils
 
 __all__ = [
     "get_token",
@@ -50,4 +50,5 @@ __all__ = [
     "download_file_by_name",
     "upload_file",
     "parse_sharepoint_url",
+    "get_dbutils",
 ]

@@ -5,6 +5,39 @@ Utilitários para integração com SharePoint.
 import urllib.parse
 
 
+def get_dbutils():
+    """
+    Retorna o objeto `dbutils` quando rodando no Databricks, ou None fora dele.
+
+    `import dbutils` NÃO funciona de dentro de um módulo `.py` no Databricks
+    (dbutils só é injetado no namespace do notebook). Aqui resolvemos pelas vias
+    suportadas, em ordem: helper do runtime (DBR 13+), construção a partir da
+    SparkSession ativa (clássico, funciona em Jobs), e por fim o global do
+    notebook via IPython.
+    """
+    try:
+        from databricks.sdk.runtime import dbutils as _db
+        return _db
+    except Exception:
+        pass
+    try:
+        from pyspark.sql import SparkSession
+        from pyspark.dbutils import DBUtils
+        _spark = SparkSession.getActiveSession()
+        if _spark is not None:
+            return DBUtils(_spark)
+    except Exception:
+        pass
+    try:
+        import IPython
+        _ip = IPython.get_ipython()
+        if _ip is not None and "dbutils" in _ip.user_ns:
+            return _ip.user_ns["dbutils"]
+    except Exception:
+        pass
+    return None
+
+
 def parse_sharepoint_url(url: str) -> tuple[str, str]:
     """
     Parse de URL do SharePoint para extrair site e folder path.

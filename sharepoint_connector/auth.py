@@ -128,13 +128,15 @@ def get_token() -> str:
     # Prioridade 2: Databricks Secrets (se em Databricks)
     if not all([tid, cid, csec]):
         try:
-            import dbutils
-            if not tid:
-                tid = dbutils.secrets.get(scope="sharepoint", key="TENANT_ID")
-            if not cid:
-                cid = dbutils.secrets.get(scope="sharepoint", key="CLIENT_ID")
-            if not csec:
-                csec = dbutils.secrets.get(scope="sharepoint", key="CLIENT_SECRET")
+            from .utils import get_dbutils
+            dbutils = get_dbutils()
+            if dbutils is not None:
+                if not tid:
+                    tid = dbutils.secrets.get(scope="sharepoint", key="TENANT_ID")
+                if not cid:
+                    cid = dbutils.secrets.get(scope="sharepoint", key="CLIENT_ID")
+                if not csec:
+                    csec = dbutils.secrets.get(scope="sharepoint", key="CLIENT_SECRET")
         except Exception:
             pass
 

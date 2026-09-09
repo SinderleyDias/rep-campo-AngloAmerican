@@ -24,8 +24,10 @@ def _get_drive_id() -> str:
     drive_id = os.getenv("DRIVE_ID")
     if not drive_id:
         try:
-            import dbutils
-            drive_id = dbutils.secrets.get(scope="sharepoint", key="DRIVE_ID")
+            from .utils import get_dbutils
+            dbutils = get_dbutils()
+            if dbutils is not None:
+                drive_id = dbutils.secrets.get(scope="sharepoint", key="DRIVE_ID")
         except Exception:
             pass
 
