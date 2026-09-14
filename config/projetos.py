@@ -79,6 +79,17 @@ PROJETOS = {
             "General/06 - Análise de dados/Suporte Digital/Barro Alto/"
             "Investigação Confirmatória/Edds Semanais"
         ),
+
+        # QAQC global (notebook 05) -- Excel consolidado de todas as checagens, roda com o dado
+        # mais atual das duas fontes (Campo + VSOL) sempre que qualquer uma das duas Jobs terminar.
+        "sharepoint_qaqc_folder": (
+            "General/06 - Análise de dados/Suporte Digital/Barro Alto/"
+            "Investigação Confirmatória/QAQC"
+        ),
+        # Amostras com duplicidade conhecida na fonte -- excluídas das checagens de Total/Dissolvido
+        # e Cromo (ver notebook 05_qaqc.ipynb)
+        "qaqc_amostras_excluir": ["1233-AA-BA-05-ASUB-230726", "1233-AA-BA-06-ASUB-230726"],
+
         "link_base_teams": (
             "https://waterltda.sharepoint.com/:f:/r/sites/1233_BR_SE_AA_PGRH_GAC_BACKGROUND/"
             "Documentos%20Compartilhados/General/06%20-%20An%C3%A1lise%20de%20dados/"
@@ -126,7 +137,14 @@ PROJETOS = {
         "grupos_asub": [],  # TODO: idem para ASUB
         "mapa_grupo_asub": {},  # TODO: de-para coluna ASUB -> "Planejamento" do escopo CDM
 
-        "sharepoint_envio_folder": ("General/06 - Análise de dados/Suporte Digital/CODEMIN/Investigação Confirmatória/Edds Semanais"),  
+        "sharepoint_envio_folder": ("General/06 - Análise de dados/Suporte Digital/CODEMIN/Investigação Confirmatória/Edds Semanais"),
+
+        # QAQC global (notebook 05) -- ver comentário equivalente na entrada de 1233_IC_BA
+        "sharepoint_qaqc_folder": (
+            "General/06 - Análise de dados/Suporte Digital/CODEMIN/"
+            "Investigação Confirmatória/QAQC"
+        ),
+
         "link_base_teams": 'https://waterltda.sharepoint.com/sites/1233_BR_SE_AA_PGRH_GAC_BACKGROUND/Documentos%20Compartilhados/Forms/AllItems.aspx?id=%2Fsites%2F1233%5FBR%5FSE%5FAA%5FPGRH%5FGAC%5FBACKGROUND%2FDocumentos%20Compartilhados%2FGeneral%2F06%20%2D%20An%C3%A1lise%20de%20dados%2FSuporte%20Digital%2FCODEMIN%2FInvestiga%C3%A7%C3%A3o%20Confirmat%C3%B3ria%2FEdds%20Semanais&viewid=51929565%2D9b45%2D4604%2D8c4a%2D2709e1fed868&d=w72e083cf0abf4e4eb5fcd64877e4033c&csf=1&ovuser=fea66664%2D4a84%2D4539%2D8269%2Dee79f745a3f4%2Csinderley%2Edias%40waterservicestech%2Ecom&TeamsCID=6983c005%2Df47e%2D47e3%2D9cba%2Dacfb6f461ac1&OR=Teams%2DHL&CT=1785848429880&clickparams=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiI0OS8yNjA3MDIxNTcxMSIsIkhhc0ZlZGVyYXRlZFVzZXIiOmZhbHNlfQ%3D%3D&CID=95f02da2%2Da081%2Da000%2D372a%2Dc66a954ee782&cidOR=SPO&FolderCTID=0x012000FAC4A9334C5EFD4CB04E39C937A3EDB5',
 
         "teams_webhook_resumo_secret": "teams-webhook-resumo-cdm",  # TODO: criar o fluxo no Power Automate
