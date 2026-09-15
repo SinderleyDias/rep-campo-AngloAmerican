@@ -79,23 +79,67 @@ Pontos de atenção confirmados no arquivo de exemplo:
   `Projeto_1233_IC_BA - BARRO ALTO` e `Projeto_1233_IC_CDM_CODEMIN/GO` (confirmado via filtro do Excel,
   screenshot em conversa). Esse é o campo fonte da verdade pra resolver `campanha`.
 
-### 3.2 E-mail (`SYS_Sample` + `SYS_SampleAnalysis`) — adiado
+### 3.2 E-mail (`SYS_Sample` + `SYS_SampleAnalysis`) — confirmado, em desenvolvimento
 
-Estrutura observada (dois arquivos relacionados por `Cod Amostra Lab`):
+**Atualização 2026-09-15**: o laboratório confirmou o formato. Perfil feito em cima de 10 arquivos reais
+enviados pela VSOL (`CAC4567_2026 REV.xlsx`, `CAC4567_2026 REV (EMAIL).xlsx` — mesmo conteúdo, ver nota
+abaixo — e `CAC5148`, `CAC5213`, `CAC5227`, `CAC5342`, `CAC5351`, `CAC5353`, `CAC5409`, `CAC5443`, todos
+`_2026.xlsx`). Estrutura confirmada (duas abas relacionadas por `Cod Amostra Lab`):
 
 - `SYS_Sample`: `Codigo Ponto`, `Nome Amostra`, `Cod Amostra Lab`, `Data Coleta`, `Amostra Coletada`,
-  `Razao Nao Coleta`, `Data Inicio/Fim Amostragem`, `Prof inicio/fim (m)`, `Tipo Qualidade`,
-  `Tipo Amostra`, `Matriz Monit`, `Tecnica Coleta`, `Laboratorio`, `Data Envio/Recebimento Lab`,
-  `Metodo Entrega`, `Cadeia Cust`, `Responsavel Coleta`, `Comentario`.
+  `Razao Nao Coleta`, `Data Inicio Amostragem`, `Data Fim Amostragem`, `Prof inicio (m)`, `Prof fim (m)`,
+  `Tipo Qualidade`, `Tipo Amostra`, `Matriz Monit`, `Tecnica Coleta`, `Laboratorio`, `Data Envio Lab`,
+  `Data Recebimento Lab`, `Metodo Entrega`, `Cadeia Cust`, `Responsavel Coleta`, `Comentario`.
 - `SYS_SampleAnalysis`: `Cod Amostra Lab`, `Cod Parametro`, `Unidade`, `Resultado Numerico`,
   `Nome Param Original`, `Resultado Original`, `Unidade Original`, `Resultado Textual`, `Qualificador`,
   `Data e Hora Analise`, `Metodo Analise`, `Tipo Analise`, `Fator Diluicao`, `LD`, `LQ`, `Comentario`.
 
 Esse modelo (duas tabelas, amostra + parâmetro) é estruturalmente muito parecido com o schema que a API já
-produz — a maior parte das colunas bate quase 1:1. **Mas não tem nenhum campo de campanha/projeto** nas
-colunas observadas, e essa é justamente a parte que o laboratório ainda está ajustando. **Não avançar no
-desenho dessa fonte até o formato ser confirmado pelo lab** — ideal é pedir que a VSOL inclua uma coluna
-de projeto/contrato no próprio export, em vez de tentar inferir via banco (ver seção 13).
+produz — a maior parte das colunas bate quase 1:1.
+
+**Ainda não tem `Proposta Comercial`** nos 10 arquivos históricos analisados — confirmado com o Sinderley:
+é uma coluna que o laboratório vai passar a adicionar em `SYS_Sample` (mesmo texto/valores já usados no
+SITE, ex. `Projeto_1233_IC_BA`), ainda não chegou em nenhum arquivo real. **Bloqueia rodar a resolução de
+campanha do e-mail em produção** até o primeiro arquivo com essa coluna chegar — ver seção 13.
+
+**Boa notícia**: diferente do SITE, o e-mail já traz preenchidos os 3 campos que lá estavam bloqueados
+(seção 4): `Metodo Analise` (100%), `Data e Hora Analise` (100%) e `LQ` (94,5%). Isso desbloqueia as
+validações de método/holding time do `03_validacoes` pro lado da VSOL assim que a campanha estiver
+disponível.
+
+Pontos de atenção confirmados nos 10 arquivos:
+
+- **Decimal inconsistente dentro da própria aba**: `Resultado Original` vem com **ponto**
+  (ex. `"< 250.00"`, `"906958.15"` — diferente do SITE, que usa vírgula). `LQ` vem como texto com
+  **vírgula** (ex. `"250,00"`). `LD` vem numérico com ponto. Cada coluna precisa do parsing certo — não dá
+  pra tratar a aba inteira com uma regra só de locale.
+- **Qualificador embutido no resultado**: mesmo padrão do SITE — 9.938 de 11.776 resultados (84%) vêm como
+  texto com prefixo `<`/`>` (ex. `"< 250.00"`). Reaproveita `_parse_resultado` (seção 4/notebook), a regex
+  já aceita ponto e vírgula.
+- **`Matriz Monit`** usa códigos curtos — `SO`, `ASUB`, `LNAPL` — diferente do SITE (`Solo`,
+  `Água subterrânea`). Precisa de de-para próprio (`LNAPL` = produto livre/fase separada, matriz nova que
+  não existe ainda no schema atual).
+- **`Nome Amostra`/`Codigo Ponto`** usam o mesmo formato de identificador do SITE
+  (`SDI-123-FL-070726 - 0,8`) — o join com `station`/`SYS_Sample` do SQL Server (seção 6) se aplica igual.
+- **`Cod Amostra Lab`** (chave entre as duas abas) tem sufixo `/2026.0` ou `/2026.1`. O sufixo `.1`
+  corresponde exatamente às linhas com `Tipo Analise == "Reanálise"` — é uma propriedade do código de lab
+  inteiro, não por parâmetro (nunca aparece `Inicial` e `Reanálise` pro mesmo `Cod Amostra Lab` +
+  `Cod Parametro`). Em todos os 8 arquivos "normais", cada amostra de campo tem exatamente 1
+  código de lab. Não precisa de lógica de merge/supersede — reportagem repetida (mesmo laboratório reemitir
+  resultado em uma entrega futura) já não é tratada entre Runs nem para a Campo hoje, então não é caso
+  especial da VSOL.
+- **Regra de qualidade nova — amostra/parâmetro deve ser único**: `CAC4567_2026 REV.xlsx` e
+  `CAC4567_2026 REV (EMAIL).xlsx` (mesmo conteúdo — o `REV.xlsx` só tem uma coluna extra com 2 anotações
+  manuais do Sinderley, não é diferença de formato do lab) são uma **reemissão/correção** pontual de 2
+  amostras (`SDI-123-FL-070726 - 0,8` e `SDI-123-FL-060726 - 0,6`), cada uma dividida em 2 códigos de lab.
+  Dentro dessa divisão, 4 parâmetros de controle se repetem para a mesma `Nome Amostra` sob códigos de lab
+  diferentes — 3 batem exatamente, mas `4-Bromofluorobenzeno (TPH)` vem com **valores diferentes**
+  (96,98% vs 81,14% numa amostra; 105,38% vs 82,14% na outra). Esse padrão **não aparece em nenhum dos 8
+  arquivos normais** — é exclusivo desse arquivo de revisão, e foi devolvido para a VSOL confirmar qual
+  valor está certo. **Decisão**: o pipeline (`01_extracao_excel.ipynb`) detecta esse caso de forma
+  genérica — mesma `Nome Amostra` + `Cod Parametro` com `Resultado Original` divergente entre códigos de
+  lab — e **exclui só as amostras conflitantes** da carga (loga como aviso acionável), sem travar o
+  arquivo inteiro nem depender do nome do arquivo.
 
 ## 4. Schema canônico de destino (Bronze)
 
@@ -141,7 +185,33 @@ correspondente no Excel do SITE. Status de cada um (decisão do Sinderley em 202
 | `laboratory` | **Resolvido** — constante `"VSOL"` para toda linha dessa fonte. |
 | `qualifier` | **Resolvido** — derivado por parsing de `Resultado da Análise` (ver tabela acima). |
 | `sample_date_sent`, `quality_code`, `frequency`, `result_comment`, `sample_comment` | **Sem ação necessária** — esses campos não são carregados no banco final, então ficam vazios/nulos para linhas VSOL sem problema. |
-| `analysis_method`, `AnalysisDate`, `quantification_limit` (LQ) | **Bloqueado — depende do laboratório.** Não dá pra assumir/derivar esses três com segurança (ex.: inferir LQ só a partir do texto `< X` cobriria só os ~85% de resultados qualificados, não os ~15% numéricos — e não teríamos LQ nenhum pra estes). **Ação**: pedir à VSOL que inclua essas 3 colunas no export do SITE. Sem elas, as validações de método e de holding time do `03_validacoes` (que comparam planejado vs. executado) não têm o que comparar pro lado da VSOL. |
+| `analysis_method`, `AnalysisDate`, `quantification_limit` (LQ) | **Bloqueado pro SITE, resolvido pelo E-MAIL.** O SITE não traz essas 3 colunas — inferi-las do texto do resultado cobriria só os ~85% qualificados, não os ~15% numéricos. Mas o formato **e-mail já traz as 3** (`Metodo Analise`, `Data e Hora Analise`, `LQ`), ver seção 3.2. Não vale mais a pena pedir isso ao SITE — quando o e-mail estiver em produção, as validações de método/holding time do `03_validacoes` passam a rodar pra VSOL a partir dessa fonte. |
+
+### Mapeamento proposto **E-MAIL → canônico**
+
+Mesmo schema canônico da tabela acima. Diferente do SITE, a leitura passa primeiro por um join
+(`SYS_SampleAnalysis` ⋈ `SYS_Sample` por `Cod Amostra Lab`) — a tabela abaixo já assume o resultado desse
+join:
+
+| Canônico | Origem no E-MAIL | Observação |
+|---|---|---|
+| `campanha` | `Proposta Comercial` (`SYS_Sample`, parseado) | **ainda não existe em nenhum arquivo real recebido** — pendente do laboratório, ver seção 3.2/13 |
+| `idAmostra` | `Cod Amostra Lab` | chave de join entre as duas abas |
+| `nomeAmostra` / `descricaoAmostra` | `Nome Amostra` | mesmo formato de identificador do SITE (`SDI-123-FL-070726 - 0,8`) |
+| `matriz` | `Matriz Monit` | códigos curtos (`SO`, `ASUB`, `LNAPL`) — de-para próprio, diferente do de-para do SITE |
+| `dataHoraAmostragem` | `Data Coleta` | |
+| `dataRecebLab` | `Data Recebimento Lab` | |
+| `dataEnvioLab` | `Data Envio Lab` | 100% vazio nos arquivos observados, mas existe no schema |
+| `dataHoraAnalise` | `Data e Hora Analise` | **novo** — SITE não tinha |
+| `laboratorio` | constante `"VSOL"` | mesmo padrão do SITE |
+| `parametroPadrao` / `parametroOriginal` | `Cod Parametro` | apesar do nome, vem com o nome do parâmetro, não um código — mesma planilha de de-para (seção 7) |
+| `resultadoNumerico` / `resultadoOriginal` | `Resultado Original` | parsing de **ponto** decimal (diferente do SITE, que é vírgula) |
+| `unidadePadrao` / `unidadeOriginal` | `Unidade Original` | |
+| `qualifier` | derivado de `Resultado Original` | mesma regex do SITE (`_parse_resultado`), já aceita ponto e vírgula |
+| `metodoAnalise` | `Metodo Analise` | **novo** — SITE não tinha |
+| `limiteQuantificacao` | `LQ` | **novo** — SITE não tinha; vem como texto com vírgula decimal (ex. `"250,00"`), diferente de `Resultado Original` (ponto) — precisa de cast próprio em `02_limpeza.ipynb` |
+| `tipoAnalise` | `Tipo Analise` | `"Inicial"` ou `"Reanálise"` — carregado pro schema só como rastreabilidade, sem lógica de merge (ver seção 3.2) |
+| `codigoHga` / `alternate_name` | derivado via join (seção 5/6) | mesma chave (`Nome Amostra`) e mesmo mecanismo do SITE |
 
 ## 5. Resolução de campanha (BA vs CDM)
 
@@ -240,7 +310,7 @@ subpasta `processado/<data>/` depois que `01_extracao_excel` concluir com sucess
 | Notebook | Situação |
 |---|---|
 | `01_extracao_api.ipynb` | **Inalterado.** Continua só Campo — diferença de fonte real demais pra unificar (HTTP+JSON vs Excel). |
-| `01_extracao_excel.ipynb` | **Novo — rascunho pronto** (`notebooks/01_extracao_excel.ipynb`). Lê o Excel do SITE, recebe `projeto`/`arquivo` como widget, filtra via `Proposta Comercial`, filtra pendentes (`Situação == Recebida`), parseia qualificador do resultado, grava Bronze com o schema canônico. Não testado em Databricks real ainda. |
+| `01_extracao_excel.ipynb` | **Em desenvolvimento** (`notebooks/01_extracao_excel.ipynb`). Recebe `projeto`/`arquivo` como widget hoje; ganhando um terceiro widget `formato` (`"auto"`/`"site"`/`"email"`, default `"auto"` — detecta pelo nome das abas do arquivo baixado) pra decidir entre os dois branches de leitura. Branch SITE inalterado (aba única, filtra via `Proposta Comercial`, filtra pendentes `Situação == Recebida`, parseia qualificador). Branch E-MAIL novo: lê `SYS_Sample` + `SYS_SampleAnalysis`, faz o join, checa duplicidade amostra/parâmetro (seção 3.2), mapeia pro schema canônico (seção 4). Os dois branches convergem pro mesmo `df_bronze` antes da gravação — só a leitura/mapeamento muda. Não testado em Databricks real ainda (só validado localmente com pandas puro contra os 10 arquivos reais). |
 | `02_limpeza.ipynb` | **Editado, não duplicado** — ganhou o widget `fonte` (`"api"`/`"vsol"`) que só escolhe 2 caminhos de pasta (Bronze lida, Silver gravada) e uma pequena melhoria (matriz case-insensitive) que serve pras duas fontes. Toda a lógica de join/de-para/conversão continua uma só, compartilhada. Diff pequeno (~15 linhas) — não testado com dado VSOL real ainda. |
 | `03_validacoes.ipynb` | **Editado, não duplicado** — mesmo widget `fonte`, só nas 2 linhas que definiam o caminho de leitura do Silver/Bronze. Resto do notebook (validação de método/holding time/escopo) inalterado. Não testado com dado VSOL real ainda. |
 | `04_envio_sharepoint.ipynb` | **Inalterado, nenhuma mudança necessária.** Só varre `SILVER/export_continuo` por `export_df_*.xlsx`, não sabe nem precisa saber a origem. Convenção de nome ganha sufixo de fonte (seção 12), mas isso é só no nome do arquivo escrito por `03_validacoes`, não em código do `04`. |
@@ -284,12 +354,27 @@ alteração em `02_limpeza.ipynb`, `03_validacoes.ipynb` ou `04_envio_sharepoint
 
 ## 11. Power Automate
 
-Fluxo: gatilho "Quando um arquivo é criado ou modificado" na pasta
-`General/06 - Análise de dados/Suporte Digital/dados_brutos_vsol` (site
-`1233_BR_SE_AA_PGRH_GAC_BACKGROUND` — ver seção 3) → **duas** ações HTTP chamando
-`POST /api/2.1/jobs/run-now` do Databricks (uma pra cada projeto), com o `job_id` do Job "VSOL (Excel)", o
-parâmetro `arquivo` = caminho do arquivo que disparou o gatilho (igual nas duas chamadas), e `projeto` =
-`1233_IC_BA` numa chamada e `1233_IC_CDM` na outra.
+**Dois flows separados**, porque um trigger de e-mail e um trigger de arquivo-criado-no-SharePoint não
+cabem no mesmo flow:
+
+- **Flow A — "VSOL: pousar anexo do e-mail"** (novo, cobre a entrega semanal automática). Gatilho "Quando
+  um novo e-mail chega (V3)" na caixa que recebe os e-mails da VSOL, filtrado por remetente/assunto →
+  ação "Salvar anexo" gravando o `.xlsx` do e-mail direto na pasta
+  `General/06 - Análise de dados/Suporte Digital/dados_brutos_vsol` (site
+  `1233_BR_SE_AA_PGRH_GAC_BACKGROUND` — ver seção 3). Esse flow só pousa o arquivo, não chama o
+  Databricks.
+- **Flow B — "VSOL: disparar Job"** (já documentado antes, inalterado). Gatilho "Quando um arquivo é
+  criado ou modificado" na mesma pasta `dados_brutos_vsol` → **duas** ações HTTP chamando
+  `POST /api/2.1/jobs/run-now` do Databricks (uma pra cada projeto), com o `job_id` do Job "VSOL (Excel)",
+  o parâmetro `arquivo` = caminho do arquivo que disparou o gatilho (igual nas duas chamadas), e
+  `projeto` = `1233_IC_BA` numa chamada e `1233_IC_CDM` na outra.
+
+Como o gatilho do Flow B é "arquivo apareceu na pasta" e não "e-mail chegou", ele dispara do mesmo jeito
+se o arquivo foi pousado pelo Flow A **ou** copiado manualmente pra lá (ex.: o Sinderley recebendo o
+Excel por outro canal e subindo direto na pasta) — não precisa de lógica nova pra isso, é consequência
+natural de como o Flow B já foi desenhado. O widget `formato` do `01_extracao_excel.ipynb` (seção 9)
+detecta sozinho se o arquivo pousado é SITE ou E-MAIL — nenhum dos dois flows precisa saber ou informar
+o formato.
 
 Autenticação dessa chamada (token/PAT do Databricks) deve ser resolvida com o mesmo padrão de segredos já
 usado no projeto (`config/secrets.py` para o lado do notebook; do lado do Power Automate, guardar como
@@ -306,13 +391,22 @@ conexão segura, não como texto no corpo do flow).
 
 ## 13. Itens abertos / próximos passos
 
-1. **E-mail (`SYS_Sample`/`SYS_SampleAnalysis`)** — fora de escopo até o laboratório fechar o formato.
-   Quando retomar: preferir pedir à VSOL que inclua uma coluna de projeto/contrato no export, em vez de
-   inferir via banco (`source_project` já foi descartado como pouco confiável).
-1b. **Pedir à VSOL 3 colunas hoje ausentes no export do SITE**: `analysis_method` (método de análise
-   executado), `AnalysisDate` (data/hora da análise, por parâmetro) e o limite de quantificação (LQ).
-   Sem elas não dá pra rodar as validações de método/holding time do `03_validacoes` pro lado da VSOL
-   (ver seção 4). Isso é bloqueante pra essas duas validações específicas, não pro resto do pipeline.
+1. ~~E-mail (`SYS_Sample`/`SYS_SampleAnalysis`) — fora de escopo~~ — **resolvido, em desenvolvimento**: o
+   laboratório confirmou o formato (seção 3.2), mapeamento pro canônico desenhado (seção 4), branch
+   `formato=email` sendo implementado em `01_extracao_excel.ipynb`.
+1a. **Bloqueante restante do e-mail: `Proposta Comercial` ainda não chegou em nenhum arquivo real.** O
+   laboratório confirmou que vai adicionar (mesmo texto/valores do SITE), mas os 10 arquivos históricos
+   analisados não têm essa coluna. O código do branch `email` já está escrito assumindo que ela vai
+   existir em `SYS_Sample` (mesma lógica de filtro por campanha do SITE) — mas **não dá pra testar o
+   filtro de campanha ponta a ponta com dado real até o laboratório mandar o primeiro arquivo com a
+   coluna**. Falha alto e claro se a coluna não existir (em vez de silenciosamente processar tudo).
+1b. ~~Pedir à VSOL 3 colunas hoje ausentes no export do SITE~~ — **resolvido pelo formato e-mail**, ver
+   seção 4. Não vale mais a pena pedir ao SITE.
+1c. **Devolver pro laboratório o caso do `CAC4567_2026 REV.xlsx`** (seção 3.2) — 2 amostras
+   (`SDI-123-FL-070726 - 0,8` e `SDI-123-FL-060726 - 0,6`) com o parâmetro `4-Bromofluorobenzeno (TPH)`
+   reportado com valores diferentes entre dois códigos de lab da mesma amostra. Pedir confirmação de qual
+   valor está correto antes de reprocessar esse arquivo especificamente (o pipeline já detecta e exclui
+   esse caso automaticamente, mas os dados ficam de fora da carga até a VSOL responder).
 2. Confirmar, célula a célula, o mapeamento completo SITE → canônico da seção 4 (especialmente os campos
    sem equivalente óbvio: `frequencia`, `acreditacao`, `legislacao`, `finalidade`, `qaqcFlag`,
    `reportavel`, bloco `CC_*`).
@@ -320,16 +414,15 @@ conexão segura, não como texto no corpo do flow).
    célula (normalização de data/matriz, join de Station, de-para de amostra e parâmetro). Falta testar
    com dado real em Databricks — não rodou ainda em ambiente nenhum.
 4. Definir a convenção exata de nome de pasta Bronze da VSOL — já esboçado como `vsolSITE_<timestamp>`
-   no rascunho de `01_extracao_excel.ipynb` — e o mecanismo de `processado/<data>/` no SharePoint (mover
-   arquivo após sucesso, ainda não implementado no rascunho).
-5. Cadastrar a entrada de config necessária em `config/projetos.py` para a fonte VSOL — pasta de pouso já
-   conhecida (`General/06 - Análise de dados/Suporte Digital/dados_brutos_vsol`, ver seção 3), falta
-   definir a pasta de `processado/` e adicionar os campos nas entradas `1233_IC_BA`/`1233_IC_CDM` já
-   existentes (sem criar chave de projeto nova). **Bloqueia rodar `01_extracao_excel.ipynb`** — ele lê
-   `cfg["sharepoint_vsol_bruto_folder"]`, que ainda não existe em `config/projetos.py`.
+   (SITE) / `vsolEMAIL_<timestamp>` (e-mail) no rascunho de `01_extracao_excel.ipynb` — e o mecanismo de
+   `processado/<data>/` no SharePoint (mover arquivo após sucesso, ainda não implementado no rascunho).
+5. ~~Cadastrar `sharepoint_vsol_bruto_folder` em `config/projetos.py`~~ — **resolvido**, já existe nas
+   duas entradas (`1233_IC_BA`/`1233_IC_CDM`).
 6. ~~Decidir como `03_validacoes.ipynb` vai ler o Silver da VSOL~~ — **resolvido**: widget `fonte`
    adicionado direto em `02_limpeza.ipynb` e `03_validacoes.ipynb` (ver seção 8), sem duplicar notebook.
    Falta só testar com dado real.
+7. Configurar o Flow A do Power Automate (e-mail → SharePoint, seção 11) — fora deste repositório, mas
+   documentado aqui pra referência; o Flow B (arquivo → Databricks) já estava desenhado antes.
 
 ## 14. Estudo do arquivo real do SITE (referência)
 
