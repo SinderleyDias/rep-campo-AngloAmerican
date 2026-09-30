@@ -150,4 +150,49 @@ PROJETOS = {
         "teams_webhook_resumo_secret": "teams-webhook-resumo-cdm",  # TODO: criar o fluxo no Power Automate
         "teams_webhook_tecnico_secret": "teams-webhook-tecnico-cdm",
     },
+
+    "1233_BKG_CDM": {
+        # Background CDM: recebe so dados da API Campo (sem VSOL, sem escopo, sem QAQC).
+        # Nao agendar os notebooks 01_extracao_excel, 03_validacoes e 05_qaqc pra este projeto.
+        "nome_exibicao": "AA - Background (CDM)",
+        "campanha_api": "Projeto_1233_BKG_CDM",
+        "source_project_sql": "AA Codemin - Background",
+
+        # De-para unico, compartilhado por todos os projetos
+        "sharepoint_depara_folder": (
+            "General/06 - Análise de dados/Suporte Digital/Barro Alto/"
+            "Investigação Confirmatória/Depara"
+        ),
+        "depara_filename": "Depara_1233_IC_BA.xlsx",
+
+        # Sem VSOL neste projeto
+        "sharepoint_vsol_bruto_folder": None,
+
+        # Sem planilha de escopo (notebook 03 nao roda)
+        "sharepoint_escopo_folder": None,
+        "escopo_filename": None,
+        "escopo_sheet_names": {},
+        "grupos_solo": [],
+        "grupos_asub": [],
+        "mapa_grupo_asub": {},
+
+        "sharepoint_envio_folder": (
+            "General/06 - Análise de dados/Suporte Digital/CODEMIN/Background/Edds Semanais"
+        ),
+
+        # Sem QAQC (notebook 05 nao roda)
+        "sharepoint_qaqc_folder": None,
+
+        "link_base_teams": (
+            "https://waterltda.sharepoint.com/sites/1233_BR_SE_AA_PGRH_GAC_BACKGROUND/"
+            "Documentos%20Compartilhados/Forms/AllItems.aspx?id=%2Fsites%2F1233%5FBR%5FSE%5FAA%5FPGRH%5FGAC%5FBACKGROUND"
+            "%2FDocumentos%20Compartilhados%2FGeneral%2F06%20%2D%20An%C3%A1lise%20de%20dados%2FSuporte%20Digital"
+            "%2FCODEMIN%2FBackground%2FEdds%20Semanais&viewid=51929565%2D9b45%2D4604%2D8c4a%2D2709e1fed868"
+            "&d=w27f6b4af9c774918a55d1e8910ede5b5&csf=1&CID=69b3b615%2D86dc%2D44d7%2D870b%2D61c306540b17"
+            "&FolderCTID=0x012000FAC4A9334C5EFD4CB04E39C937A3EDB5"
+        ),
+
+        "teams_webhook_resumo_secret": "teams-webhook-resumo-bkg-cdm",  # TODO: criar o fluxo no Power Automate
+        "teams_webhook_tecnico_secret": "teams-webhook-tecnico-bkg-cdm",
+    },
 }
