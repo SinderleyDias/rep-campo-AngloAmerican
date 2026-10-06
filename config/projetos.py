@@ -19,6 +19,8 @@ PROJETOS = {
 
         # Filtro aplicado sobre a coluna `campanha` retornada pela API Campo Análises
         "campanha_api": "Projeto_1233_IC_BA",
+        # Numeros de proposta comercial da VSOL (coluna "Proposta Comercial" pode vir como nome OU numero)
+        "propostas_vsol": ["PC1365/2026"],
 
         # Filtro aplicado na query JDBC contra a tabela `station` (SQL Server)
         "source_project_sql": "AA Barro Alto - Investigacao Confirmatoria",
@@ -109,6 +111,8 @@ PROJETOS = {
         # enquanto isso não for preenchido.
         "nome_exibicao": "AA - Investigação Confirmatória (CDM)",
         "campanha_api": "Projeto_1233_IC_CDM",
+        # Numeros de proposta comercial da VSOL (coluna "Proposta Comercial" pode vir como nome OU numero)
+        "propostas_vsol": ["PC1421/2026"],
         # TEMPORARIO: amostras da propriedade CDM que o laboratorio classificou sob
         # a campanha "Projeto_1233_BR_SE_AA" por engano. Ja foi pedida a
         # reclassificacao ao lab -- remover esta chave quando as amostras voltarem
