@@ -20,7 +20,7 @@ PROJETOS = {
         # Filtro aplicado sobre a coluna `campanha` retornada pela API Campo Análises
         "campanha_api": "Projeto_1233_IC_BA",
         # Numeros de proposta comercial da VSOL (coluna "Proposta Comercial" pode vir como nome OU numero)
-        "propostas_vsol": ["PC1365/2026"],
+        "propostas_vsol": ["PC1365/2026", "PC1572/2026"],
 
         # Filtro aplicado na query JDBC contra a tabela `station` (SQL Server)
         "source_project_sql": "AA Barro Alto - Investigacao Confirmatoria",
